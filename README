@@ -1,0 +1,137 @@
+AdamTriggers Module / 2003-04-05 / v0.85.1 / pre-release
+-------------------
+Adam D. Moss / aspirin@icculus.org / adam@gimp.org
+
+NOTE
+----
+This is a pre-release of the AdamTriggers module.  The API and functionality
+are not necessarily fixed or rigorously tested at this point, and neither
+are the examples or documentation exhaustive.  No home page yet.
+
+
+WHAT
+----
+This is a portable, small and fast triggers/listeners library implemented
+in C and released under a BSD-style license (essentially meaning that you may
+use it freely in commercial, non-commercial, open or closed-source products
+and if it breaks then you get to keep all seventeen pieces).  The AdamTriggers
+module compiles to around 3K of executable code on x86/gcc, and uses no global
+or static data.
+
+Triggers emit events and Listeners pick up these events.  Any number
+of Listeners can listen for particular event types they are interested
+in from particular Triggers.  When a Trigger fires an event, all
+Listeners interested in that event type from that Trigger will be informed
+by having their Listener-specific callback function invoked with the event
+type, a Listener-specific pointer, and an optional event-specific payload
+concerning that event.
+
+The nature of events and their payloads are agreed between the Listener
+and the Trigger.  The AdamTriggers module does not know or care about
+the meaning of your application-specific event types.  These are identified
+at run-time by four-character mnemonics of your choosing, and their payloads
+passed as void* pointers.
+
+The routines comprising AdamTriggers are designed for speed and simplicity
+while maintaining fair flexibility.  Some limitations have been designed-in
+to support these goals while discouraging potentially dangerous usage
+patterns.
+
+AdamTriggers, although general-purpose, are geared towards facilitating
+event-driven game worlds.  One goal that they are designed towards is that
+it should be cheap for the application to trigger events profusely and let
+the trigger system care whether anyone is listening.  Read the 'DESIGN
+LIMITATIONS' sections below for some current caveats, however.
+
+Triggers and Listeners are identified by pointers to their respective
+structures.  It is safe, however, to use the deletion API calls on
+Triggers with outstanding Listeners (and Listeners with outstanding
+Triggers) without leaving dangling pointers, since they know how to
+inform each other about deletions and subsequently clean up.
+
+Listeners may be marked as 'auto-delete' with the listenerAllowAutoDelete()
+API call.  An auto-delete Listener is a Listener that is allowed to
+automatically free itself when all of the Triggers it is watching have been
+deleted.  This is simply for convenience so that the application doesn't have
+to keep track of such Listeners whose lifetimes are closely tied to the
+Triggers they are watching.
+
+
+INCLUDING ADAMTRIGGERS IN YOUR CODE
+-----------------------------------
+
+To use the AdamTriggers module in your code, simply #include "triggers.h"
+in the source files that need access to the AdamTriggers API and link
+your final program with the object file that you get from compiling
+triggers.c.
+
+For example, to compile triggers.c into triggers.o under most unixoids:
+
+  cc -c triggers.c
+
+...and to link the resulting triggers.o with your own application objects
+to create an executable program:
+
+  cc triggers.o mymodule1.o mymodule2.o -o myapplication
+
+For further details on the API, see triggers.h and example.c
+
+
+GOTCHAS AND DESIGN LIMITATIONS
+------------------------------
+* Events are delivered to interested Listeners synchronously and in
+  essentially random order.
+* A maximum of 256 distinct event types may be concurrently listened for on
+  a single Trigger.  A #define in triggers.h can lower this figure to save
+  space.  This figure cannot be raised further without some (minor) work.
+* The event payload's data belongs to the code triggering the event and hence
+  the given pointer is not expected to be valid once the event has finished
+  being acted upon.  Combined with synchronous delivery this ensures that it
+  is safe to pass pointers to data on the stack when triggering events, for
+  speed and convenience.
+* An auto-delete Listener should generally never be explicitly deleted
+  after being marked as auto-delete.  For an explanation of why, see
+  triggers.c:listenerDelete()
+* A Listener without a callback function defined is possible but useless.
+* An auto-delete Listener will never get automatically deleted if it never
+  asks to watch a Trigger.
+
+
+GOTCHAS AND LIMITATIONS THAT *MIGHT* BE LIFTED IN THE FUTURE
+------------------------------------------------------------
+* API is not necessarily fixed at this point.
+* Listener destructor event callbacks are untested.
+* We assume that realloc() is pretty cheap, as it is on Linux/glibc2.
+* It is not safe to use AdamTriggers from more than one thread.
+* It is not safe to implicitly or explicitly modify a Trigger from an
+  event triggered from that Trigger.
+* A callback isn't explicitly told which Listener it was called from.  You
+  can put this information in the Listener-specific data hook
+  (listenerSetData()) if it is required, which is passed to the callback
+  as the void* listener_data parameter.
+* A callback isn't explicitly told which Trigger caused it to be called.  The
+  event-firing code can put this information in the event payload if it is
+  required.
+* Any Listener's callback should expect to get a listener destructor event
+  (currently "/LDe", changable from triggers.h) in addition to the events it
+  is explicitly expecting to receive.
+
+
+FUTURE
+------
+* Reduce Trigger structure's footprint (~2K now).  I have plans for this.
+* Triggering events for which there are no listeners is much more
+  expensive than triggering events for which there are listeners, because
+  of the specific hash implementation.  I have plans for this.
+* Allow application to be told when the Trigger's event table is full.
+* I am working on an interface for triggering and receiving events across
+  a C<->lua boundary.  This may or may not form part of AdamTriggers.
+* Improve docs and example.c
+* I do not expect to expand the basic functionality of AdamTriggers.
+* AdamTriggers needs a less moronic name.
+
+
+If you use AdamTriggers in your project then I'd be interested in knowing!
+
+Cheers,
+--Adam
