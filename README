@@ -1,12 +1,6 @@
 AdamTriggers Module / 2003-04-05 / v0.85.1 / pre-release
 -------------------
-Adam D. Moss / aspirin@icculus.org / adam@gimp.org
-
-NOTE
-----
-This is a pre-release of the AdamTriggers module.  The API and functionality
-are not necessarily fixed or rigorously tested at this point, and neither
-are the examples or documentation exhaustive.  No home page yet.
+Adam D. Moss / c@yotes.com
 
 
 WHAT
@@ -132,6 +126,6 @@ FUTURE
 
 
 If you use AdamTriggers in your project then I'd be interested in knowing!
+I'm sorry for the dumb 'AdamTriggers' name; I was lacking inspiration.
 
-Cheers,
---Adam
+Cheers.
